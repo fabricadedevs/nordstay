@@ -1,5 +1,8 @@
-# nome:particoes
-reserva.criada:3
-reserva.cancelada:3
-fechadura.acesso-liberado:3
-cobranca.gerada:3
+# Formato: nome[:particoes]   (padrões: 6 partições, 7 dias; DLT com 14 dias)
+nordstay.checkin-realizado
+nordstay.chave-gerada
+nordstay.tentativa-acesso
+nordstay.consumo-efetuado
+nordstay.checkout-solicitado
+nordstay.chave-revogada
+nordstay.fatura-fechada
