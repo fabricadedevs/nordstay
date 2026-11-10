@@ -1,0 +1,14 @@
+name: nordstay
+services:
+  redis:
+    build: ./redis
+    image: nordstay/redis:8.2.2
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD}
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+volumes:
+  redis-data:
