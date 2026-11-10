@@ -1,14 +1,34 @@
 name: nordstay
+
 services:
   redis:
     build: ./redis
     image: nordstay/redis:8.2.2
     environment:
-      REDIS_PASSWORD: ${REDIS_PASSWORD}
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}
     ports:
       - "6379:6379"
     volumes:
       - redis-data:/data
 
+  kafka:
+    build: ./kafka
+    image: nordstay/kafka:4.3.1
+    environment:
+      CLUSTER_ID: ${KAFKA_CLUSTER_ID:?defina KAFKA_CLUSTER_ID no .env}
+    ports:
+      - "9092:9092"
+    volumes:
+      - kafka-data:/var/lib/kafka/data
+
+  kafka-init:
+    build: ./kafka-init
+    image: nordstay/kafka-init:4.3.1
+    depends_on:
+      kafka:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   redis-data:
+  kafka-data:

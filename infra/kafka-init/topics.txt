@@ -1,0 +1,5 @@
+# nome:particoes
+reserva.criada:3
+reserva.cancelada:3
+fechadura.acesso-liberado:3
+cobranca.gerada:3
