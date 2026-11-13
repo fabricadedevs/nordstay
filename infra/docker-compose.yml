@@ -59,7 +59,16 @@ services:
         condition: service_healthy
     restart: "no"
 
-    
+  redis-seed:
+    build: ./redis-seed
+    image: nordstay/redis-seed:8.2.2
+    environment:
+      REDIS_PASSWORD: ${REDIS_PASSWORD:?defina REDIS_PASSWORD no .env}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: "no"
+
 volumes:
   redis-data:
   kafka-data:
