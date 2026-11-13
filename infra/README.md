@@ -27,6 +27,7 @@ Pronto quando aparecer:
 | minio      | `Up (healthy)` |
 | kafka-init | `Exited (0)`   |
 | minio-init | `Exited (0)`   |
+| redis-seed | `Exited (0)`   |
 
 > O **primeiro build demora alguns minutos**: o MinIO e o cliente `mc` são compilados do código-fonte (a imagem oficial saiu do Docker Hub). Os builds seguintes usam cache.
 
@@ -53,6 +54,7 @@ infra/
 ├── kafka/                    # Kafka 4.3.1 em modo KRaft (1 nó)
 ├── kafka-init/               # cria os tópicos de topics.txt e termina
 ├── minio/                    # MinIO compilado do fonte
+├── redis-seed/               # massa de dados do Redis para testar os endpoints
 └── minio-init/               # cria o bucket, envia o seed e indexa no Redis
     ├── seed/                 # imagens do catálogo (quartos/, areas-comuns/)
     ├── baixar_seed.py        # baixa as fotos reais do Unsplash
@@ -329,6 +331,58 @@ docker compose exec redis sh -c 'REDISCLI_AUTH=$REDIS_PASSWORD redis-cli HGETALL
 |---|---|---|
 | `nordstay:catalogo:imagens` | Set | caminhos de todas as imagens |
 | `nordstay:catalogo:imagem:<caminho>` | Hash | metadados e URL pública da imagem |
+
+---
+
+## 5.6 Massa de dados do Redis (`redis-seed`)
+
+O `redis-seed` grava reservas, quartos, catálogo, faturas e chaves digitais para testar os endpoints.
+Roda a cada `docker compose up` e recria só o que ele mesmo gravou (lista em `seed:chaves`); dados criados pelos serviços não são apagados.
+
+As datas são relativas a **hoje em Recife** (o check-in exige `data = hoje`), então os IDs mudam a cada dia.
+Para ver os IDs do dia:
+
+```powershell
+docker compose logs redis-seed --no-log-prefix
+docker compose exec redis sh -c 'REDISCLI_AUTH=$REDIS_PASSWORD redis-cli HGETALL seed:cenarios'
+```
+
+Comandos para consultar cada registro: [`redis/README.md`](redis/README.md).
+
+Para reaplicar (volta tudo ao estado inicial):
+
+```powershell
+docker compose up -d redis-seed
+```
+
+| Cenário (`seed:cenarios`) | ID | Quarto | Status | Endpoint e resultado esperado |
+|---|---|---|---|---|
+| `checkin-ok` | `RSV-<hoje>-0042` | Q-214 | `CONFIRMADA` | `POST /api/reservas/{id}/checkin` → 202 |
+| `checkin-ok-2` | `RSV-<hoje>-0043` | Q-108 | `CONFIRMADA` | `POST /api/reservas/{id}/checkin` → 202 |
+| `checkin-data-futura` | `RSV-<amanhã>-0051` | Q-305 | `CONFIRMADA` | check-in recusado: data ≠ hoje |
+| `checkin-no-show` | `RSV-<ontem>-0033` | Q-118 | `NO_SHOW` | check-in recusado |
+| `hospedado` | `RSV-<ontem>-0037` | Q-112 | `CHECKED_IN` | `POST /api/consumos`, `GET /api/faturas/{id}` (versão 3), `/ws/estadias/{id}?token=<hospedado-token>`, `POST /api/reservas/{id}/checkout` |
+| `encerrado` | `RSV-<hoje-3>-0029` | Q-201 | `CHECKED_OUT` | fatura `FECHADA`: consumo vai para a DLT; chave na denylist |
+
+| Chave | Tipo | Conteúdo |
+|---|---|---|
+| `reserva:{RSV}` | Hash | reserva (status, hóspede, datas, `diariasCentavos`) |
+| `reservas`, `reservas:status:<STATUS>` | Set | IDs das reservas |
+| `quarto:<Q>` / `quartos` | Hash / Set | tipo, diária e foto (`objectKey`) do quarto |
+| `catalogo:<sku>` / `catalogo:skus` / `catalogo:categoria:<CAT>` | Hash / Set | 12 itens: `FRIGOBAR`, `PETISCO`, `SERVICO`, `EXPERIENCIA` |
+| `fatura:{RSV}` | Hash | `status`, `versao`, `pendentes`, `consumoCentavos`, `diariasCentavos` (campos do `aplicar-consumo.lua`) |
+| `fatura:{RSV}:itens` | List | cada elemento é o JSON (array) dos itens de um consumo |
+| `idem:{RSV}:<eventId>` | String (TTL 72 h) | marca de idempotência dos consumos já aplicados |
+| `chave:<jti>` | Hash (expira em `validoAte`) | chave digital |
+| `chave:reserva:{RSV}` | String | `jti` da chave ativa da reserva |
+| `chave:denylist:<jti>` | String (TTL até `validoAte`) | chave revogada |
+| `estadia:{RSV}:token` | String | token aceito no handshake do WebSocket |
+
+> O token da chave do seed é opaco (`seed-token-<jti>`): libera o WebSocket, mas não passa na validação RS256 do door-lock.
+> Para testar `POST /api/acessos`, faça o check-in de `checkin-ok` e use a chave emitida pelo serviço.
+>
+> Só `areas-comuns/cafe-da-manha.jpg`, `areas-comuns/piscina.jpg` e as fotos dos quartos existem no bucket.
+> Os `objectKey` em `itens/` e `experiencias/` assinam URL normalmente, mas o GET da imagem dá 404 até as fotos entrarem no `minio-init/seed/`.
 
 ---
 
