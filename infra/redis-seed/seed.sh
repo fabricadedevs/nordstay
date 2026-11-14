@@ -76,44 +76,44 @@ item_json() { # sku nome categoria quantidade precoUnitario objectKey
 }
 
 # ---------- Reservas (reservation-service) ----------
-reserva() { # id quarto hospedeId nome documento acompanhantes status diaCheckin noites diaria
-  noites=$9; diaria=${10}
+reserva() { # id quarto hospedeId nome documento documentoFinal acompanhantes status diaCheckin noites diaria
+  noites=${10}; diaria=${11}
   r HSET "$(k "reserva:{$1}")" reservaId "$1" quartoId "$2" \
-    hospedeId "$3" hospedeNome "$4" hospedeDocumentoMascarado "$5" \
-    acompanhantes "$6" status "$7" dataCheckin "$(data "$8")" \
-    checkoutPrevisto "$(saida_local $(( $8 + noites )))" \
+    hospedeId "$3" hospedeNome "$4" hospedeDocumentoMascarado "$5" hospedeDocumentoFinal "$6" \
+    acompanhantes "$7" status "$8" dataCheckin "$(data "$9")" \
+    checkoutPrevisto "$(saida_local $(( $9 + noites )))" \
     noites "$noites" diariasCentavos $(( noites * diaria )) canal APP \
     criadaEm "$(iso $(em -20 10))"
   r SADD "$(k reservas)" "$1"
-  r SADD "$(k "reservas:status:$7")" "$1"
+  r SADD "$(k "reservas:status:$8")" "$1"
 }
 
 HOJE=$(compacta 0); AMANHA=$(compacta 1); ONTEM=$(compacta -1); ANTEONTEM3=$(compacta -3)
 
 # 1) CONFIRMADA hoje: caminho feliz do POST /checkin
 RSV1="RSV-$HOJE-0042"
-reserva "$RSV1" Q-214 HSP-88213 "Marina Albuquerque" "***.482.913-**" 1 CONFIRMADA 0 3 62000
+reserva "$RSV1" Q-214 HSP-88213 "Marina Albuquerque" "***.482.913-**" 1307 1 CONFIRMADA 0 3 62000
 
 # 2) CONFIRMADA hoje: segundo check-in (testes em paralelo)
 RSV2="RSV-$HOJE-0043"
-reserva "$RSV2" Q-108 HSP-88214 "Rafael Cavalcanti" "***.731.204-**" 0 CONFIRMADA 0 2 32000
+reserva "$RSV2" Q-108 HSP-88214 "Rafael Cavalcanti" "***.731.204-**" 0458 0 CONFIRMADA 0 2 32000
 
 # 3) CONFIRMADA amanhã: POST /checkin deve recusar (data ≠ hoje)
 RSV3="RSV-$AMANHA-0051"
-reserva "$RSV3" Q-305 HSP-88220 "Juliana Lins" "***.105.668-**" 3 CONFIRMADA 1 4 54000
+reserva "$RSV3" Q-305 HSP-88220 "Juliana Lins" "***.105.668-**" 6821 3 CONFIRMADA 1 4 54000
 
 # 4) NO_SHOW ontem: POST /checkin deve recusar
 RSV4="RSV-$ONTEM-0033"
-reserva "$RSV4" Q-118 HSP-88209 "Carlos Maranhão" "***.390.517-**" 0 NO_SHOW -1 2 32000
+reserva "$RSV4" Q-118 HSP-88209 "Carlos Maranhão" "***.390.517-**" 1764 0 NO_SHOW -1 2 32000
 
 # 5) CHECKED_IN desde ontem: consumo, fatura, WebSocket, acesso e checkout
 RSV5="RSV-$ONTEM-0037"
-reserva "$RSV5" Q-112 HSP-88211 "Thiago Barreto" "***.624.031-**" 1 CHECKED_IN -1 4 38000
+reserva "$RSV5" Q-112 HSP-88211 "Thiago Barreto" "***.624.031-**" 3195 1 CHECKED_IN -1 4 38000
 r HSET "reserva:{$RSV5}" checkinEm "$(iso $(em -1 15 4))"
 
 # 6) CHECKED_OUT hoje (saída antecipada): consumo e acesso devem ser recusados
 RSV6="RSV-$ANTEONTEM3-0029"
-reserva "$RSV6" Q-201 HSP-88205 "Beatriz Wanderley" "***.857.442-**" 0 CHECKED_OUT -3 3 45000
+reserva "$RSV6" Q-201 HSP-88205 "Beatriz Wanderley" "***.857.442-**" 4229 0 CHECKED_OUT -3 3 45000
 r HSET "reserva:{$RSV6}" checkinEm "$(iso $(em -3 14 48))" checkoutEm "$(iso $(( AGORA - 7200 )))"
 
 # ---------- Chaves digitais (door-lock-service) ----------

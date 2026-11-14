@@ -52,12 +52,14 @@ public class ReservaSeedDevRunner implements ApplicationRunner {
             String saida,
             String diariasCentavos) {
         return Map.entry(reservaId, Map.of(
+                "reservaId", reservaId,
                 "quartoId", quartoId,
                 "status", status,
-                "nome", nome,
-                "documento", documento,
-                "entrada", entrada,
-                "saida", saida,
+                "hospedeNome", nome,
+                "hospedeDocumentoMascarado", "***.***.*" + documento.substring(7, 9) + "-" + documento.substring(9),
+                "hospedeDocumentoFinal", documento.substring(7),
+                "dataCheckin", entrada,
+                "checkoutPrevisto", saida + "T12:00:00-03:00",
                 "diariasCentavos", diariasCentavos
         ));
     }

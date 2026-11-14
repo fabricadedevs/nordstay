@@ -44,12 +44,14 @@ class ReservaRedisAdapterIntegrationTest {
     @Test
     void retornaReservaMapeadaQuandoHashExiste() {
         redisTemplate.opsForHash().putAll(CHAVE, Map.of(
+                "reservaId", RESERVA_ID,
                 "quartoId", "Q-214",
                 "status", "CONFIRMADA",
-                "nome", "Hóspede de teste",
-                "documento", "12345679132",
-                "entrada", "2026-11-20",
-                "saida", "2026-11-23",
+                "hospedeNome", "Hóspede de teste",
+                "hospedeDocumentoMascarado", "***.***.*91-32",
+                "hospedeDocumentoFinal", "9132",
+                "dataCheckin", "2026-11-20",
+                "checkoutPrevisto", "2026-11-23T12:00:00-03:00",
                 "diariasCentavos", "186000"
         ));
 
@@ -57,7 +59,7 @@ class ReservaRedisAdapterIntegrationTest {
                 RESERVA_ID,
                 "Q-214",
                 StatusReserva.CONFIRMADA,
-                new Hospede("Hóspede de teste", new Documento("12345679132")),
+                new Hospede("Hóspede de teste", new Documento("***.***.*91-32", "9132")),
                 LocalDate.of(2026, 11, 20),
                 LocalDate.of(2026, 11, 23),
                 186000
