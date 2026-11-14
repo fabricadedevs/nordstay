@@ -21,7 +21,7 @@ public final class Documento {
     }
 
     public String mascarado() {
-        return "***.***.*" + digitos.substring(6, 9) + "-" + digitos.substring(9);
+        return "***.***.*" + digitos.substring(7, 9) + "-" + digitos.substring(9);
     }
 
     @Override
