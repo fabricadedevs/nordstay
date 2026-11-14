@@ -14,7 +14,9 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.UUID;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -27,6 +29,9 @@ class ReservaRedisAdapterIntegrationTest {
 
     @Autowired
     private ReservaRedisAdapter adapter;
+
+    @Autowired
+    private ConsultaRateLimitRedisAdapter rateLimitAdapter;
 
     @Autowired
     private StringRedisTemplate redisTemplate;
@@ -64,5 +69,29 @@ class ReservaRedisAdapterIntegrationTest {
     @Test
     void retornaVazioQuandoHashNaoExiste() {
         assertTrue(adapter.buscarPorId(RESERVA_ID).isEmpty());
+    }
+
+    @Test
+    void permiteDezConsultasERejeitaAsSeguintesParaMesmoIp() {
+        String ip = "test-" + UUID.randomUUID();
+
+        for (int consulta = 1; consulta <= 10; consulta++) {
+            assertTrue(rateLimitAdapter.registrarConsulta(ip));
+        }
+
+        assertFalse(rateLimitAdapter.registrarConsulta(ip));
+        assertFalse(rateLimitAdapter.registrarConsulta(ip));
+    }
+
+    @Test
+    void aplicaContagemIndependenteParaCadaIp() {
+        String ipA = "test-" + UUID.randomUUID();
+        String ipB = "test-" + UUID.randomUUID();
+
+        for (int consulta = 1; consulta <= 10; consulta++) {
+            assertTrue(rateLimitAdapter.registrarConsulta(ipA));
+        }
+
+        assertTrue(rateLimitAdapter.registrarConsulta(ipB));
     }
 }

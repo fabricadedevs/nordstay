@@ -1,8 +1,10 @@
 package br.com.nordstay.reservation_service.entrypoint.rest;
 
 import br.com.nordstay.reservation_service.application.port.in.ConsultarReservaUseCase;
+import br.com.nordstay.reservation_service.application.port.out.ConsultaRateLimitPort;
 import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontradaException;
 import br.com.nordstay.reservation_service.domain.model.Reserva;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -20,20 +22,29 @@ import java.time.LocalDate;
 public class ReservaController {
 
     private final ConsultarReservaUseCase consultarReserva;
+    private final ConsultaRateLimitPort consultaRateLimit;
 
-    public ReservaController(ConsultarReservaUseCase consultarReserva) {
+    public ReservaController(
+            ConsultarReservaUseCase consultarReserva,
+            ConsultaRateLimitPort consultaRateLimit) {
         this.consultarReserva = consultarReserva;
+        this.consultaRateLimit = consultaRateLimit;
     }
 
     @GetMapping("/{reservaId}")
-    public ResponseEntity<ReservaResponse> buscar(
+    public ResponseEntity<?> buscar(
             @PathVariable
             @Pattern(regexp = "RSV-\\d{8}-\\d{4}")
             String reservaId,
             @RequestHeader("X-Documento-Final")
             @Pattern(regexp = "\\d{4}")
-            String documentoFinal) {
+            String documentoFinal,
+            HttpServletRequest request) {
 
+        if (!consultaRateLimit.registrarConsulta(request.getRemoteAddr())) {
+            return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS)
+                    .body(new ErroResponse("Limite de consultas excedido"));
+        }
         Reserva reserva = consultarReserva.consultar(reservaId, documentoFinal);
         return ResponseEntity.ok(ReservaResponse.de(reserva));
     }
