@@ -137,7 +137,7 @@ class ReservaControllerTest {
                 RESERVA_ID,
                 "Q-214",
                 StatusReserva.CONFIRMADA,
-                new Hospede("Hóspede de teste", new Documento(DOCUMENTO_COMPLETO)),
+                new Hospede("Hóspede de teste", new Documento("***.***.*91-32", "9132")),
                 LocalDate.of(2026, 11, 20),
                 LocalDate.of(2026, 11, 23),
                 186000

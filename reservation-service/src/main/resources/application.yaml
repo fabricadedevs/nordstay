@@ -1,5 +1,12 @@
 spring:
   application:
     name: reservation-service
+  data:
+    redis:
+      database: 0
+      host: localhost
+      port: 6379
+      password: ${REDIS_PASSWORD:nordstay-local}
+      connect-timeout: 60000
 server:
   port: 8081
