@@ -1,1 +1,46 @@
-/* You can add global styles to this file, and also import other style files */
+/* Tokens do NordStay (Figma, página "01 · Tipografia e cores") */
+:root {
+  --ns-fonte: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --ns-navy: #14213d;
+  --ns-navy-700: #1f3059;
+  --ns-laranja: #e07a1f;
+  --ns-laranja-claro: #fff4e8;
+  --ns-tinta: #1b2233;
+  --ns-cinza: #6b7385;
+  --ns-linha: #e3e6ec;
+  --ns-fundo: #f5f6f8;
+  --ns-verde: #1e7b45;
+  --ns-verde-claro: #e3f4ea;
+  --ns-vermelho: #c0362c;
+  --ns-vermelho-claro: #fdecea;
+  --ns-azul: #1d5fa8;
+  --ns-azul-claro: #e8eef9;
+  --ns-ambar: #8a5300;
+  --ns-ambar-claro: #fff4e5;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  font-family: var(--ns-fonte);
+  color: var(--ns-tinta);
+  background: var(--ns-fundo);
+  -webkit-font-smoothing: antialiased;
+}
+
+.ns-em-construcao {
+  padding: 24px;
+  color: var(--ns-cinza);
+}
+
+.ns-em-construcao h1 {
+  margin: 0 0 8px;
+  color: var(--ns-tinta);
+  font-size: 24px;
+}
