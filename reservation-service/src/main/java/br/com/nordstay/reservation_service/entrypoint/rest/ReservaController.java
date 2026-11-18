@@ -1,21 +1,28 @@
 package br.com.nordstay.reservation_service.entrypoint.rest;
 
 import br.com.nordstay.reservation_service.application.port.in.ConsultarReservaUseCase;
+import br.com.nordstay.reservation_service.application.port.in.RealizarCheckinCommand;
+import br.com.nordstay.reservation_service.application.port.in.RealizarCheckinUseCase;
 import br.com.nordstay.reservation_service.application.port.out.ConsultaRateLimitPort;
 import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontradaException;
 import br.com.nordstay.reservation_service.domain.model.Reserva;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import jakarta.validation.constraints.Pattern;
+import java.net.URI;
 import java.time.LocalDate;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/reservas")
@@ -23,12 +30,15 @@ public class ReservaController {
 
     private final ConsultarReservaUseCase consultarReserva;
     private final ConsultaRateLimitPort consultaRateLimit;
+    private final RealizarCheckinUseCase realizarCheckin;
 
     public ReservaController(
             ConsultarReservaUseCase consultarReserva,
-            ConsultaRateLimitPort consultaRateLimit) {
+            ConsultaRateLimitPort consultaRateLimit,
+            RealizarCheckinUseCase realizarCheckin) {
         this.consultarReserva = consultarReserva;
         this.consultaRateLimit = consultaRateLimit;
+        this.realizarCheckin = realizarCheckin;
     }
 
     @GetMapping("/{reservaId}")
@@ -47,6 +57,31 @@ public class ReservaController {
         }
         Reserva reserva = consultarReserva.consultar(reservaId, documentoFinal);
         return ResponseEntity.ok(ReservaResponse.de(reserva));
+    }
+
+    @PostMapping("/{reservaId}/checkin")
+    public ResponseEntity<CheckinAceitoResponse> realizarCheckin(
+            @PathVariable
+            @Pattern(regexp = "RSV-\\d{8}-\\d{4}")
+            String reservaId,
+            @RequestHeader("Idempotency-Key")
+            UUID idempotencyKey,
+            @RequestHeader("X-Documento-Final")
+            @Pattern(regexp = "\\d{4}")
+            String documentoFinal,
+            @Valid @RequestBody CheckinRequest request) {
+        var resultado = realizarCheckin.realizar(new RealizarCheckinCommand(
+                reservaId,
+                idempotencyKey,
+                documentoFinal,
+                request.acompanhantes(),
+                request.aceiteTermos(),
+                request.previsaoChegada()
+        ));
+
+        return ResponseEntity.accepted()
+                .location(URI.create(resultado.websocket()))
+                .body(CheckinAceitoResponse.de(resultado));
     }
 
     @ExceptionHandler(ReservaNaoEncontradaException.class)
