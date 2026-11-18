@@ -9,6 +9,7 @@ import br.com.nordstay.reservation_service.domain.exception.CheckinRequisicaoInv
 import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontradaException;
 import br.com.nordstay.reservation_service.domain.model.Reserva;
 import br.com.nordstay.reservation_service.domain.service.PoliticaCheckin;
+import org.springframework.stereotype.Service;
 
 import java.time.Clock;
 import java.time.LocalDate;
@@ -16,6 +17,7 @@ import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.UUID;
 
+@Service
 public class RealizarCheckinService implements RealizarCheckinUseCase {
 
     private static final ZoneId FUSO_CHECKIN = ZoneId.of("America/Recife");
