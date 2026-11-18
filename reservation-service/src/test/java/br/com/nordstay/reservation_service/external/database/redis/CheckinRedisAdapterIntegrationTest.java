@@ -2,6 +2,7 @@ package br.com.nordstay.reservation_service.external.database.redis;
 
 import br.com.nordstay.reservation_service.TestcontainersConfiguration;
 import br.com.nordstay.reservation_service.application.port.in.CheckinAceito;
+import br.com.nordstay.reservation_service.application.port.out.EventoPendente;
 import br.com.nordstay.reservation_service.domain.exception.StatusCheckinInvalidoException;
 import br.com.nordstay.reservation_service.domain.model.Documento;
 import br.com.nordstay.reservation_service.domain.model.Hospede;
@@ -22,17 +23,20 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SpringBootTest
+@SpringBootTest(properties = "reservation.outbox.enabled=false")
 @Import(TestcontainersConfiguration.class)
 class CheckinRedisAdapterIntegrationTest {
 
     private static final String RESERVA_ID = "RSV-20261120-0042";
     private static final String RESERVA_KEY = "reserva:{" + RESERVA_ID + "}";
     private static final String OUTBOX_KEY = "outbox:reservation";
+    private static final String OUTBOX_PARTITION_KEYS_KEY = "outbox:reservation:partition-keys";
+    private static final String OUTBOX_LOCK_KEY = "outbox:reservation:publisher-lock";
     private static final UUID IDEMPOTENCY_KEY =
             UUID.fromString("6c0d6a5e-3f2b-4b1a-9e8c-2d7f4a1b9c30");
     private static final String IDEMPOTENCY_REDIS_KEY =
@@ -44,17 +48,24 @@ class CheckinRedisAdapterIntegrationTest {
     private CheckinRedisAdapter adapter;
 
     @Autowired
+    private OutboxRedisAdapter outboxAdapter;
+
+    @Autowired
     private StringRedisTemplate redisTemplate;
 
     @AfterEach
     void limparRedis() {
         redisTemplate.delete(RESERVA_KEY);
         redisTemplate.delete(IDEMPOTENCY_REDIS_KEY);
+        redisTemplate.delete(OUTBOX_LOCK_KEY);
         List<String> eventos = redisTemplate.opsForList().range(OUTBOX_KEY, 0, -1);
         if (eventos != null) {
-            eventos.stream()
-                    .filter(evento -> evento.contains(RESERVA_ID))
-                    .forEach(evento -> redisTemplate.opsForList().remove(OUTBOX_KEY, 1, evento));
+            for (String evento : eventos) {
+                if (evento.contains(RESERVA_ID)) {
+                    redisTemplate.opsForList().remove(OUTBOX_KEY, 1, evento);
+                    redisTemplate.opsForList().remove(OUTBOX_PARTITION_KEYS_KEY, 1, "Q-214");
+                }
+            }
         }
     }
 
@@ -90,10 +101,62 @@ class CheckinRedisAdapterIntegrationTest {
                 .filter(item -> item.contains(RESERVA_ID))
                 .findFirst()
                 .orElseThrow();
-        assertTrue(evento.contains("\"tipo\":\"CHECKIN_REALIZADO\""));
+        assertTrue(evento.contains("\"tipo\":\"nordstay.checkin-realizado\""));
+        assertTrue(evento.contains("\"versao\":1"));
+        assertTrue(evento.contains("\"origem\":\"reservation-service\""));
+        assertTrue(evento.contains("\"correlacaoId\":\"" + RESERVA_ID + "\""));
         assertTrue(evento.contains("\"quartoId\":\"Q-214\""));
         assertTrue(evento.contains("\"reservaId\":\"" + RESERVA_ID + "\""));
-        assertTrue(evento.contains("\"checkoutPrevisto\":\"2026-11-23T12:00-03:00\""));
+        assertTrue(evento.contains("\"numeroHospedes\":2"));
+        assertTrue(evento.contains("\"checkinEm\":\"2026-11-20T17:02:11Z\""));
+        assertTrue(evento.contains("\"checkoutPrevisto\":\"2026-11-23T15:00Z\""));
+        assertEquals("Q-214", redisTemplate.opsForList().index(OUTBOX_PARTITION_KEYS_KEY, 0));
+    }
+
+    @Test
+    void reservaSomenteUmPublicadorEConfirmaAsDuasListasAtomicas() {
+        String evento = "{\"id\":\"evento-outbox\",\"reservaId\":\"" + RESERVA_ID + "\"}";
+        redisTemplate.opsForList().rightPush(OUTBOX_KEY, evento);
+        redisTemplate.opsForList().rightPush(OUTBOX_PARTITION_KEYS_KEY, "Q-214");
+
+        var reservado = outboxAdapter.reservarProximo("token-publicador-1").orElseThrow();
+
+        assertEquals(evento, reservado.payload());
+        assertEquals("Q-214", reservado.chave());
+        assertTrue(outboxAdapter.reservarProximo("token-publicador-2").isEmpty());
+        assertTrue(outboxAdapter.confirmarPublicacao("token-publicador-1", reservado));
+        assertEquals(0L, redisTemplate.opsForList().size(OUTBOX_KEY));
+        assertEquals(0L, redisTemplate.opsForList().size(OUTBOX_PARTITION_KEYS_KEY));
+    }
+
+    @Test
+    void liberacaoMantemEventoPendenteParaNovaTentativa() {
+        String evento = "{\"id\":\"evento-outbox\",\"reservaId\":\"" + RESERVA_ID + "\"}";
+        redisTemplate.opsForList().rightPush(OUTBOX_KEY, evento);
+        redisTemplate.opsForList().rightPush(OUTBOX_PARTITION_KEYS_KEY, "Q-214");
+
+        EventoPendente primeiraReserva =
+                outboxAdapter.reservarProximo("token-publicador-1").orElseThrow();
+        outboxAdapter.liberar("token-publicador-1");
+        EventoPendente segundaReserva =
+                outboxAdapter.reservarProximo("token-publicador-2").orElseThrow();
+
+        assertEquals(primeiraReserva, segundaReserva);
+        assertTrue(outboxAdapter.confirmarPublicacao("token-publicador-2", segundaReserva));
+    }
+
+    @Test
+    void tokenIncorretoNaoRemoveEventoDaOutbox() {
+        String evento = "{\"id\":\"evento-outbox\",\"reservaId\":\"" + RESERVA_ID + "\"}";
+        redisTemplate.opsForList().rightPush(OUTBOX_KEY, evento);
+        redisTemplate.opsForList().rightPush(OUTBOX_PARTITION_KEYS_KEY, "Q-214");
+
+        EventoPendente reservado =
+                outboxAdapter.reservarProximo("token-publicador-1").orElseThrow();
+
+        assertFalse(outboxAdapter.confirmarPublicacao("outro-token", reservado));
+        assertEquals(evento, redisTemplate.opsForList().index(OUTBOX_KEY, 0));
+        assertEquals("Q-214", redisTemplate.opsForList().index(OUTBOX_PARTITION_KEYS_KEY, 0));
     }
 
     @Test

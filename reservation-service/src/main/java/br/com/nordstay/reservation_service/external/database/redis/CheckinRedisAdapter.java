@@ -13,6 +13,7 @@ import org.springframework.stereotype.Repository;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalTime;
 import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
@@ -24,6 +25,7 @@ public class CheckinRedisAdapter implements RegistrarCheckinPort {
 
     private static final long IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60;
     private static final String OUTBOX_KEY = "outbox:reservation";
+    private static final String OUTBOX_PARTITION_KEYS_KEY = "outbox:reservation:partition-keys";
 
     private static final DefaultRedisScript<String> REGISTRAR_CHECKIN_SCRIPT =
             new DefaultRedisScript<>("""
@@ -42,7 +44,9 @@ public class CheckinRedisAdapter implements RegistrarCheckinPort {
                     end
 
                     local tipoOutbox = redis.call('TYPE', KEYS[3]).ok
-                    if tipoOutbox ~= 'none' and tipoOutbox ~= 'list' then
+                    local tipoChavesOutbox = redis.call('TYPE', KEYS[4]).ok
+                    if (tipoOutbox ~= 'none' and tipoOutbox ~= 'list')
+                        or (tipoChavesOutbox ~= 'none' and tipoChavesOutbox ~= 'list') then
                         return 'INVALID_OUTBOX_TYPE'
                     end
 
@@ -53,6 +57,7 @@ public class CheckinRedisAdapter implements RegistrarCheckinPort {
                         'previsaoChegada', ARGV[4])
                     redis.call('SET', KEYS[2], ARGV[1], 'EX', ARGV[5])
                     redis.call('RPUSH', KEYS[3], ARGV[6])
+                    redis.call('RPUSH', KEYS[4], ARGV[7])
 
                     return 'CREATED\\n' .. ARGV[1]
                     """, String.class);
@@ -81,19 +86,20 @@ public class CheckinRedisAdapter implements RegistrarCheckinPort {
             Integer acompanhantes,
             LocalTime previsaoChegada) {
         String respostaJson = serializar(resposta);
-        String eventoJson = serializarEvento(reserva, resposta, checkinEm);
+        String eventoJson = serializarEvento(reserva, checkinEm, acompanhantes);
         String reservaKey = chaveReserva(reserva.reservaId());
         String idempotenciaKey = chaveIdempotencia(reserva.reservaId(), idempotencyKey);
 
         String resultado = redisTemplate.execute(
                 REGISTRAR_CHECKIN_SCRIPT,
-                List.of(reservaKey, idempotenciaKey, OUTBOX_KEY),
+                List.of(reservaKey, idempotenciaKey, OUTBOX_KEY, OUTBOX_PARTITION_KEYS_KEY),
                 respostaJson,
                 checkinEm.toString(),
                 acompanhantes.toString(),
                 previsaoChegada == null ? "" : previsaoChegada.toString(),
                 Long.toString(IDEMPOTENCY_TTL_SECONDS),
-                eventoJson
+                eventoJson,
+                reserva.quartoId()
         );
 
         if (resultado == null) {
@@ -148,18 +154,25 @@ public class CheckinRedisAdapter implements RegistrarCheckinPort {
         }
     }
 
-    private String serializarEvento(Reserva reserva, CheckinAceito resposta, OffsetDateTime checkinEm) {
+    private String serializarEvento(
+            Reserva reserva,
+            OffsetDateTime checkinEm,
+            Integer acompanhantes) {
         OffsetDateTime checkoutPrevisto =
                 reserva.saida().atTime(12, 0).atOffset(checkinEm.getOffset());
+        OffsetDateTime checkinUtc = checkinEm.withOffsetSameInstant(ZoneOffset.UTC);
+        OffsetDateTime checkoutUtc = checkoutPrevisto.withOffsetSameInstant(ZoneOffset.UTC);
         return """
-                {"eventId":"%s","tipo":"CHECKIN_REALIZADO","reservaId":"%s","quartoId":"%s","checkoutPrevisto":"%s","ocorridoEm":"%s","correlationId":"%s"}"""
+                {"id":"%s","tipo":"nordstay.checkin-realizado","versao":1,"ocorridoEm":"%s","origem":"reservation-service","correlacaoId":"%s","quartoId":"%s","dados":{"reservaId":"%s","numeroHospedes":%d,"checkinEm":"%s","checkoutPrevisto":"%s"}}"""
                 .formatted(
                         UUID.randomUUID(),
+                        checkinUtc,
                         escaparJson(reserva.reservaId()),
                         escaparJson(reserva.quartoId()),
-                        checkoutPrevisto,
-                        checkinEm,
-                        resposta.correlationId()
+                        escaparJson(reserva.reservaId()),
+                        acompanhantes + 1,
+                        checkinUtc,
+                        checkoutUtc
                 );
     }
 
