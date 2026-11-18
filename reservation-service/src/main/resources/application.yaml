@@ -17,6 +17,7 @@ spring:
       properties:
         enable.idempotence: true
         delivery.timeout.ms: 30000
+        request.timeout.ms: 10000
 server:
   port: 8081
 reservation:
