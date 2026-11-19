@@ -1,0 +1,48 @@
+<h2>Encontre sua reserva</h2>
+<p class="apoio">Use o código que chegou no seu e-mail.</p>
+
+<form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+  <div class="ns-campo">
+    <label for="codigo"> Código da reserva </label>
+    <input
+      id="codigo"
+      formControlName="codigo"
+      placeholder="RSV-AAAAMMDD-NNNN"
+      inputmode="numeric"
+      autocomplete="off"
+      (input)="mascararCodigo()"
+      [attr.aria-invalid]="!!erro()"
+      [attr.aria-describedBy]="erro() ? 'erro-busca' : null"
+    />
+  </div>
+
+  <div class="ns-campo">
+    <label for="documento"> 4 últimos dígitos do documento </label>
+    <input
+      id="documento"
+      formControlName="documentoFinal"
+      placeholder="0000"
+      inputmode="numeric"
+      maxlength="4"
+      autocomplete="off"
+      (input)="mascararDocumento()"
+      [attr.aria-invalid]="!!erro()"
+      [attr.aria-describedBy]="erro() ? 'erro-busca' : null"
+    />
+  </div>
+
+  @if (erro(); as mensagem) {
+    <div id="erro-busca" class="ns-alerta ns-alerta--erro" role="alert">
+      <span class="icone" aria-hidden="true">!</span>
+      <span>{{ mensagem }}</span>
+    </div>
+  } @else {
+    <p class="nota">Seus dados ficam só neste aparelho durante a estadia.</p>
+  }
+
+  <button class="ns-botao" type="submit" [disabled]="form.invalid || carregando()">
+    {{ carregando() ? 'Buscando…' : 'Buscar reserva' }}
+  </button>
+</form>
+
+<p class="ajuda">Precisa de ajuda? Fale com a recepção</p>
