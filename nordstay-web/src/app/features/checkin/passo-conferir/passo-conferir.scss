@@ -1,0 +1,94 @@
+:host {
+  display: grid;
+}
+h2 {
+  margin: 24px 0 4px;
+  font-size: 20px;
+  line-height: 28px;
+}
+.apoio {
+  margin: 0 0 16px;
+  color: var(--ns-cinza);
+  font-size: 14px;
+}
+.reserva {
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.foto {
+  position: relative;
+  height: 130px;
+  background:
+    url('/img/checkin/quarto.jpg') center / cover,
+    linear-gradient(135deg, var(--ns-navy-700), var(--ns-azul));
+}
+.selo {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 4px 10px;
+  border-radius: 12px;
+  background: var(--ns-verde-claro);
+  color: var(--ns-verde);
+  font-size: 12px;
+  font-weight: 600;
+}
+.corpo {
+  padding: 14px 20px 8px;
+}
+h3 {
+  margin: 0;
+  font-size: 16px;
+}
+.hospede {
+  margin: 4px 0 16px;
+  color: var(--ns-cinza);
+  font-size: 12px;
+}
+.datas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.datas div {
+  display: grid;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: var(--ns-fundo);
+}
+.datas small {
+  color: var(--ns-cinza);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+}
+.datas strong {
+  font-size: 16px;
+}
+.datas span {
+  color: var(--ns-cinza);
+  font-size: 12px;
+}
+dl {
+  margin: 12px 0 0;
+}
+dl div {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  font-size: 14px;
+}
+dl div + div {
+  border-top: 1px solid var(--ns-linha);
+}
+dt {
+  color: var(--ns-cinza);
+}
+dd {
+  margin: 0;
+  font-weight: 600;
+}
+.ns-link {
+  margin-top: 12px;
+}

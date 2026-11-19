@@ -1,0 +1,37 @@
+<h2>Confira sua reserva</h2>
+<p class="apoio">Está tudo certo? Então é só continuar.</p>
+
+<article class="ns-card reserva">
+  <div class="foto" role="img" aria-label="Foto do quarto">
+    <span class="selo">Confirmada</span>
+  </div>
+  <div class="corpo">
+    <h3>Quarto {{ reserva().quartoId }}</h3>
+    <p class="hospede">{{ reserva().hospede.nome }} · {{ reserva().hospede.documentoMascarado }}</p>
+
+    <div class="datas">
+      <div>
+        <small>Entrada</small><strong>{{ reserva().entrada | dataCurta }}</strong
+        ><span>a partir das 14h</span>
+      </div>
+      <div>
+        <small>Saída</small><strong>{{ reserva().saida | dataCurta }}</strong
+        ><span>até 12h</span>
+      </div>
+    </div>
+
+    <dl>
+      <div>
+        <dt>Reserva</dt>
+        <dd>{{ reserva().reservaId }}</dd>
+      </div>
+      <div>
+        <dt>Diárias</dt>
+        <dd>{{ reserva().diariasCentavos | brl }}</dd>
+      </div>
+    </dl>
+  </div>
+</article>
+
+<button class="ns-botao" type="button" (click)="continuar.emit()">Continuar</button>
+<button class="ns-link" type="button" (click)="voltar.emit()">Não é a sua reserva? Voltar</button>
