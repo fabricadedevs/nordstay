@@ -1,0 +1,83 @@
+h2 {
+  margin: 24px 0 4px;
+  font-size: 20px;
+  line-height: 28px;
+}
+.apoio {
+  margin: 0;
+  color: var(--ns-cinza);
+  font-size: 14px;
+}
+form {
+  display: grid;
+  gap: 16px;
+  margin-top: 20px;
+}
+.linha {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 20px;
+}
+.linha strong {
+  display: block;
+  font-size: 15px;
+}
+.linha small {
+  color: var(--ns-cinza);
+  font-size: 12px;
+}
+.contador {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.contador button {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ns-linha);
+  background: #fff;
+  font-size: 18px;
+  cursor: pointer;
+}
+.contador .mais {
+  border-color: var(--ns-laranja);
+  background: var(--ns-laranja);
+  color: #fff;
+}
+.contador button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+output {
+  min-width: 16px;
+  text-align: center;
+  font-size: 18px;
+  font-weight: 700;
+}
+input[type='time'] {
+  height: 48px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--ns-fundo);
+  font: 700 16px var(--ns-fonte);
+}
+.termos {
+  justify-content: flex-start;
+  cursor: pointer;
+}
+.termos input {
+  width: 24px;
+  height: 24px;
+  accent-color: var(--ns-laranja);
+}
+.link {
+  color: var(--ns-laranja) !important;
+}
+p.ns-alerta {
+  margin: 0;
+  font-weight: 400;
+}
