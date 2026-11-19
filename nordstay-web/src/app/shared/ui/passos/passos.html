@@ -1,0 +1,11 @@
+<ol [attr.aria-label]="rotulo()">
+  @for (n of numeros(); track n) {
+    <li
+      [class.feito]="n < atual()"
+      [class.atual]="n === atual()"
+      [attr.aria-current]="n === atual() ? 'step' : null"
+    >
+      <span>{{ n < atual() ? '✓' : n }}</span>
+    </li>
+  }
+</ol>

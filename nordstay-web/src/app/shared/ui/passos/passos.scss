@@ -1,0 +1,41 @@
+ol {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+li {
+  display: flex;
+  align-items: center;
+}
+li + li::before {
+  content: '';
+  width: 28px;
+  height: 2px;
+  margin: 0 4px;
+  background: var(--ns-linha);
+}
+li.feito + li::before,
+li.atual::before {
+  background: var(--ns-laranja);
+}
+span {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 1.5px solid var(--ns-linha);
+  background: #fff;
+  color: var(--ns-cinza);
+  font: 700 12px var(--ns-fonte);
+}
+.feito span,
+.atual span {
+  border-color: var(--ns-laranja);
+  background: var(--ns-laranja);
+  color: #fff;
+}
