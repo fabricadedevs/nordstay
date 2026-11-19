@@ -9,7 +9,7 @@ export interface BuscaReserva {
 
 @Component({
   imports: [ReactiveFormsModule],
-  selector: 'app-passo-buscar',
+  selector: 'ns-passo-buscar',
   styleUrl: './passo-buscar.scss',
   templateUrl: './passo-buscar.html',
 })
@@ -29,7 +29,7 @@ export class PassoBuscar {
   }
 
   protected mascararDocumento(): void {
-    const campo = this.form.controls.codigo;
+    const campo = this.form.controls.documentoFinal;
     campo.setValue(somenteDigitos(campo.value, 4), { emitEvent: false });
   }
 

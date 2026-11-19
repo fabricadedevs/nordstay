@@ -2,7 +2,7 @@ import { Component, computed, input } from '@angular/core';
 
 @Component({
   imports: [],
-  selector: 'app-passos',
+  selector: 'ns-passos',
   styleUrl: './passos.scss',
   templateUrl: './passos.html',
 })

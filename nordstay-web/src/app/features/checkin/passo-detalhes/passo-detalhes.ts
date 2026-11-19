@@ -6,7 +6,7 @@ const MAX_ACOMPANHANTES = 6;
 
 @Component({
   imports: [ReactiveFormsModule],
-  selector: 'app-passo-detalhes',
+  selector: 'ns-passo-detalhes',
   styleUrl: './passo-detalhes.scss',
   templateUrl: './passo-detalhes.html',
 })

@@ -5,7 +5,7 @@ import { DataCurtaPipe } from '../../../shared/pipes/data-curta-pipe';
 
 @Component({
   imports: [BrlPipe, DataCurtaPipe],
-  selector: 'app-passo-conferir',
+  selector: 'ns-passo-conferir',
   styleUrl: './passo-conferir.scss',
   templateUrl: './passo-conferir.html',
 })

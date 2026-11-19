@@ -1,0 +1,43 @@
+@if (passo() === 1) {
+  <header class="hero">
+    <p class="marca">NordStay</p>
+    <h1>Bem-vindo!</h1>
+    <p>Faça seu check-in em 1 minuto.</p>
+  </header>
+} @else {
+  <header class="topo">
+    <button type="button" aria-label="Voltar" (click)="voltar()">‹</button>
+    <h1>Check-in</h1>
+  </header>
+}
+
+<main [class.folha]="passo() === 1">
+  <ns-passos [atual]="passo()" rotulo="Etapas do check-in" />
+
+  @switch (passo()) {
+    @case (1) {
+      <ns-passo-buscar
+        [carregando]="carregando()"
+        [erro]="erro()?.mensagem ?? null"
+        (buscar)="buscar($event)"
+      />
+    }
+    @case (2) {
+      @if (reserva(); as r) {
+        <ns-passo-conferir [reserva]="r" (continuar)="irPara(3)" (voltar)="recomecar()" />
+      }
+    }
+    @case (3) {
+      <ns-passo-detalhes
+        [carregando]="carregando()"
+        [erro]="erro()?.mensagem ?? null"
+        (confirmar)="fazerCheckin($event)"
+      />
+      @if (erro()?.status === 409) {
+        <button class="ns-link ir-chave" type="button" (click)="irParaChave()">
+          Ir para a chave
+        </button>
+      }
+    }
+  }
+</main>
