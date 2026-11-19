@@ -1,0 +1,161 @@
+<ns-site-cabecalho />
+
+<main class="conteudo">
+  <nav class="trilha" aria-label="Você está em">
+    <button type="button" (click)="buscarOutra.emit()">Check-in</button>
+    <span aria-hidden="true">›</span>
+    <button type="button" (click)="buscarOutra.emit()">Buscar reserva</button>
+    <span aria-hidden="true">›</span>
+    <span aria-current="page">Conferir</span>
+  </nav>
+
+  <div class="colunas">
+    <section class="quarto" aria-labelledby="titulo-quarto">
+      <span class="etiqueta">{{ quarto.categoria }}</span>
+
+      <div class="titulo">
+        <div>
+          <h1 id="titulo-quarto">Quarto {{ reserva().quartoId }} · {{ quarto.vista }}</h1>
+          <p class="local">{{ quarto.local }}</p>
+        </div>
+        <div class="avaliacao">
+          <div>
+            <strong>{{ quarto.conceito }}</strong>
+            <small>{{ quarto.avaliacoes }}</small>
+          </div>
+          <span class="nota" [attr.aria-label]="'Nota ' + quarto.nota">{{ quarto.nota }}</span>
+        </div>
+      </div>
+
+      <div class="galeria">
+        @for (foto of quarto.fotos; track foto; let i = $index) {
+          <img [src]="foto" [alt]="i === 0 ? 'Foto do quarto' : ''" [class]="'foto-' + i" />
+        }
+        <span class="mais-fotos">+{{ quarto.fotosExtras }} fotos</span>
+      </div>
+
+      <div class="oferece">
+        <h2>O que este quarto oferece</h2>
+        <ul>
+          @for (item of quarto.comodidades; track item) {
+            <li><span class="check" aria-hidden="true">✓</span>{{ item }}</li>
+          }
+        </ul>
+      </div>
+
+      <p class="aviso">
+        Sua chave digital chega no app em segundos depois do check-in e vale até
+        {{ reserva().saida | dataCurta | slice: 5 }}, 12:00.
+      </p>
+    </section>
+
+    <aside class="resumo" aria-labelledby="titulo-resumo">
+      <header>
+        <h2 id="titulo-resumo">Sua reserva</h2>
+        <span class="confirmada">Confirmada</span>
+      </header>
+
+      <div class="corpo">
+        <div class="hospede">
+          <span class="avatar" aria-hidden="true">{{ iniciais() }}</span>
+          <div>
+            <strong>{{ reserva().hospede.nome }}</strong>
+            <small
+              >Documento {{ reserva().hospede.documentoMascarado }} ·
+              {{ reserva().reservaId }}</small
+            >
+          </div>
+        </div>
+
+        <div class="datas">
+          <div>
+            <small>Entrada</small>
+            <strong>{{ reserva().entrada | dataCurta }}</strong>
+            <span>a partir das 14:00</span>
+          </div>
+          <div>
+            <small>Saída</small>
+            <strong>{{ reserva().saida | dataCurta }}</strong>
+            <span>até 12:00</span>
+          </div>
+        </div>
+
+        <div class="total">
+          <span>{{ noites() }} {{ noites() === 1 ? 'diária' : 'diárias' }}</span>
+          <strong>{{ reserva().diariasCentavos | brl }}</strong>
+        </div>
+
+        <form [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+          <h3>Últimos detalhes</h3>
+
+          <div class="linha">
+            <div>
+              <strong id="rotulo-acompanhantes">Acompanhantes</strong>
+              <small>Até {{ max }} pessoas</small>
+            </div>
+            <div class="seletor" role="group" aria-labelledby="rotulo-acompanhantes">
+              <button
+                type="button"
+                aria-label="Diminuir acompanhantes"
+                (click)="alterar(-1)"
+                [disabled]="acompanhantes === 0"
+              >
+                −
+              </button>
+              <output aria-live="polite">{{ acompanhantes }}</output>
+              <button
+                type="button"
+                class="mais"
+                aria-label="Aumentar acompanhantes"
+                (click)="alterar(1)"
+                [disabled]="acompanhantes === max"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          <div class="linha">
+            <label for="chegada">
+              <strong>Previsão de chegada</strong>
+              <small>Opcional</small>
+            </label>
+            <input id="chegada" class="hora" type="time" formControlName="previsaoChegada" />
+          </div>
+
+          <label class="aceite">
+            <input type="checkbox" formControlName="aceiteTermos" />
+            <span class="caixa" aria-hidden="true">✓</span>
+            <span>
+              <strong>Li e aceito os termos da estadia</strong>
+              <small>Ver termos</small>
+            </span>
+          </label>
+
+          @if (erro(); as mensagem) {
+            <div class="ns-alerta ns-alerta--erro erro" role="alert">
+              <span>{{ mensagem }}</span>
+            </div>
+          }
+
+          <button class="enviar" type="submit" [disabled]="form.invalid || carregando()">
+            {{ carregando() ? 'Enviando…' : 'Fazer check-in' }}
+          </button>
+          @if (mostrarIrParaChave()) {
+            <button class="ns-link ir-chave" type="button" (click)="irParaChave.emit()">
+              Ir para a chave
+            </button>
+          }
+          <p class="sem-cobranca">Sem cobrança agora. A conta é fechada no checkout.</p>
+        </form>
+
+        <div class="outra">
+          <span>Não é a sua reserva?</span>
+          <button type="button" (click)="buscarOutra.emit()">Buscar outra</button>
+        </div>
+      </div>
+    </aside>
+  </div>
+</main>
+
+<ns-site-rodape />

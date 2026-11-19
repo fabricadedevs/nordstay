@@ -1,0 +1,91 @@
+<ns-site-cabecalho />
+
+<section class="hero">
+  <div class="conteudo">
+    <p class="overline">Check-in digital</p>
+    <h1>Sua estadia começa aqui, sem fila</h1>
+    <p class="apoio">
+      Informe o código da reserva e receba a chave do quarto no celular em segundos.
+    </p>
+  </div>
+</section>
+
+<main class="conteudo">
+  <form class="busca" [formGroup]="form" (ngSubmit)="enviar()" novalidate>
+    <label class="campo codigo" [class.invalido]="!!erro()">
+      <span>Código da reserva</span>
+      <input
+        id="codigo"
+        formControlName="codigo"
+        placeholder="RSV-AAAAMMDD-NNNN"
+        inputmode="numeric"
+        autocomplete="off"
+        (input)="mascararCodigo()"
+        [attr.aria-invalid]="!!erro()"
+        [attr.aria-describedby]="erro() ? 'erro-busca' : null"
+      />
+    </label>
+    <label class="campo documento" [class.invalido]="!!erro()">
+      <span>4 últimos dígitos do documento</span>
+      <input
+        id="documento"
+        formControlName="documentoFinal"
+        placeholder="0000"
+        inputmode="numeric"
+        maxlength="4"
+        autocomplete="off"
+        (input)="mascararDocumento()"
+        [attr.aria-invalid]="!!erro()"
+        [attr.aria-describedby]="erro() ? 'erro-busca' : null"
+      />
+    </label>
+    <button type="submit" [disabled]="form.invalid || carregando()">
+      {{ carregando() ? 'Buscando…' : 'Buscar reserva' }}
+    </button>
+  </form>
+
+  @if (erro(); as mensagem) {
+    <div id="erro-busca" class="ns-alerta ns-alerta--erro erro" role="alert">
+      <span class="icone" aria-hidden="true">!</span>
+      <span>{{ mensagem }}</span>
+    </div>
+  } @else {
+    <p class="nota">
+      Recebeu o código por e-mail na confirmação da reserva. Seus dados ficam só neste navegador
+      durante a estadia.
+    </p>
+  }
+
+  <section class="secao" aria-labelledby="titulo-como-funciona">
+    <h2 id="titulo-como-funciona">Como funciona</h2>
+    <p class="subtitulo">Três passos e você já está no quarto.</p>
+    <ol class="passos">
+      @for (p of passos; track p.numero) {
+        <li class="passo">
+          <img [src]="p.foto" alt="" />
+          <span class="numero" aria-hidden="true">{{ p.numero }}</span>
+          <h3>{{ p.titulo }}</h3>
+          <p>{{ p.texto }}</p>
+        </li>
+      }
+    </ol>
+  </section>
+
+  <section class="secao resort" aria-labelledby="titulo-resort">
+    <h2 id="titulo-resort">Conheça o resort</h2>
+    <p class="subtitulo">Tudo o que a sua chave digital abre.</p>
+    <ul class="areas">
+      @for (a of areas; track a.nome) {
+        <li class="area">
+          <img [src]="a.foto" alt="" />
+          <div class="legenda">
+            <h3>{{ a.nome }}</h3>
+            <p>{{ a.texto }}</p>
+          </div>
+        </li>
+      }
+    </ul>
+  </section>
+</main>
+
+<ns-site-rodape />

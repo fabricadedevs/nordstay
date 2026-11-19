@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, DestroyRef, inject, signal } from '@angular/core';
 import { Passos } from '../../shared/ui/passos/passos';
 import { BuscaReserva, PassoBuscar } from './passo-buscar/passo-buscar';
 import { PassoConferir } from './passo-conferir/passo-conferir';
@@ -9,11 +9,16 @@ import { Router } from '@angular/router';
 import { CheckinRequest, ReservaResponse } from '../../shared/models/nordstay.models';
 import { ErroApi } from '../../core/interceptors/erro-api';
 import { finalize } from 'rxjs';
+import { WebBusca } from './web-busca/web-busca';
+import { WebReserva } from './web-reserva/web-reserva';
 
 type Passo = 1 | 2 | 3;
 
+/** A partir desta largura vale o layout web do Figma ("02 · Web (Chrome)"); abaixo, o mobile. */
+const MIDIA_WEB = '(min-width: 1024px)';
+
 @Component({
-  imports: [Passos, PassoBuscar, PassoConferir, PassoDetalhes],
+  imports: [Passos, PassoBuscar, PassoConferir, PassoDetalhes, WebBusca, WebReserva],
   selector: 'ns-checkin',
   styleUrl: './checkin.scss',
   templateUrl: './checkin.html',
@@ -27,6 +32,7 @@ export class Checkin {
   protected readonly reserva = signal<ReservaResponse | null>(null);
   protected readonly carregando = signal(false);
   protected readonly erro = signal<ErroApi | null>(null);
+  protected readonly telaLarga = signal(this.observarLargura());
 
   private documentoFinal = '';
 
@@ -39,7 +45,7 @@ export class Checkin {
       .buscar(codigo, documentoFinal)
       .pipe(finalize(() => this.carregando.set(false)))
       .subscribe({
-        next: reserva => {
+        next: (reserva) => {
           this.reserva.set(reserva);
           this.documentoFinal = documentoFinal;
           this.chaveCheckin = null;
@@ -58,12 +64,8 @@ export class Checkin {
       .fazerCheckin(reserva.reservaId, this.documentoFinal, dados, this.chaveCheckin)
       .pipe(finalize(() => this.carregando.set(false)))
       .subscribe({
-        next: aceito => {
-          this.sessao.iniciarEstadia(
-            aceito.reservaId,
-            aceito.quartoId,
-            reserva.hospede.nome
-          );
+        next: (aceito) => {
+          this.sessao.iniciarEstadia(aceito.reservaId, aceito.quartoId, reserva.hospede.nome);
           void this.router.navigate(['/estadia', aceito.reservaId, 'chave']);
         },
         error: (e: ErroApi) => this.erro.set(e),
@@ -73,12 +75,8 @@ export class Checkin {
   /** 409: o check-in já tinha sido feito (por exemplo, em outro aparelho). */
   protected irParaChave(): void {
     const reserva = this.reserva();
-    if(!reserva) return;
-    this.sessao.iniciarEstadia(
-      reserva.reservaId,
-      reserva.quartoId,
-      reserva.hospede.nome
-    );
+    if (!reserva) return;
+    this.sessao.iniciarEstadia(reserva.reservaId, reserva.quartoId, reserva.hospede.nome);
     void this.router.navigate(['/estadia', reserva.reservaId, 'chave']);
   }
 
@@ -94,6 +92,16 @@ export class Checkin {
   protected recomecar(): void {
     this.reserva.set(null);
     this.irPara(1);
+  }
+
+  /** true em telas de 1024 px ou mais; acompanha o redimensionamento da janela. */
+  private observarLargura(): boolean {
+    if (typeof matchMedia !== 'function') return false;
+    const midia = matchMedia(MIDIA_WEB);
+    const aoMudar = (e: MediaQueryListEvent) => this.telaLarga.set(e.matches);
+    midia.addEventListener('change', aoMudar);
+    inject(DestroyRef).onDestroy(() => midia.removeEventListener('change', aoMudar));
+    return midia.matches;
   }
 
   private iniciarChamada(): void {
