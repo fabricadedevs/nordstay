@@ -4,6 +4,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { CheckinRequest, ReservaResponse } from '../../../shared/models/nordstay.models';
 import { BrlPipe } from '../../../shared/pipes/brl.pipe';
 import { DataCurtaPipe } from '../../../shared/pipes/data-curta-pipe';
+import { GaleriaFotos } from '../../../shared/ui/galeria-fotos/galeria-fotos';
 import { SiteCabecalho } from '../../../shared/ui/site-cabecalho/site-cabecalho';
 import { SiteRodape } from '../../../shared/ui/site-rodape/site-rodape';
 import { QUARTO } from '../conteudo-resort';
@@ -17,7 +18,7 @@ const DIA_MS = 86_400_000;
  */
 @Component({
   selector: 'ns-web-reserva',
-  imports: [ReactiveFormsModule, SlicePipe, BrlPipe, DataCurtaPipe, SiteCabecalho, SiteRodape],
+  imports: [ReactiveFormsModule, SlicePipe, BrlPipe, DataCurtaPipe, SiteCabecalho, SiteRodape, GaleriaFotos],
   styleUrl: './web-reserva.scss',
   templateUrl: './web-reserva.html',
 })

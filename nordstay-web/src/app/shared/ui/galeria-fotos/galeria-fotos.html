@@ -1,0 +1,48 @@
+<dialog
+  #dialogo
+  class="galeria"
+  [attr.aria-label]="titulo()"
+  (keydown)="teclado($event)"
+  (click)="cliqueFundo($event)"
+>
+  @let foto = fotos()[atual()];
+
+  <header class="topo">
+    <h2>{{ titulo() }}</h2>
+    <span class="contador" aria-live="polite">{{ atual() + 1 }} / {{ fotos().length }}</span>
+    <button type="button" class="fechar" aria-label="Fechar galeria" (click)="fechar()">✕</button>
+  </header>
+
+  <div
+    class="palco"
+    (click)="cliqueFundo($event)"
+    (pointerdown)="comecarToque($event)"
+    (pointerup)="terminarToque($event)"
+    (pointercancel)="terminarToque($event)"
+  >
+    <button type="button" class="seta seta--anterior" aria-label="Foto anterior" (click)="anterior()">‹</button>
+    @if (foto) {
+      <figure>
+        <img [src]="foto.src" [alt]="foto.legenda" draggable="false" />
+        <figcaption>{{ foto.legenda }}</figcaption>
+      </figure>
+    }
+    <button type="button" class="seta seta--proxima" aria-label="Próxima foto" (click)="proxima()">›</button>
+  </div>
+
+  <div class="miniaturas" role="tablist" aria-label="Todas as fotos">
+    @for (f of fotos(); track f.src; let i = $index) {
+      <button
+        #miniatura
+        type="button"
+        role="tab"
+        [class.ativa]="i === atual()"
+        [attr.aria-selected]="i === atual()"
+        [attr.aria-label]="f.legenda"
+        (click)="ir(i)"
+      >
+        <img [src]="f.src" alt="" loading="lazy" />
+      </button>
+    }
+  </div>
+</dialog>

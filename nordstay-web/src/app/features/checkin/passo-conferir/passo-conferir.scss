@@ -17,10 +17,34 @@ h2 {
 }
 .foto {
   position: relative;
+  display: block;
+  width: 100%;
   height: 130px;
-  background:
-    url('/img/checkin/quarto.jpg') center / cover,
-    linear-gradient(135deg, var(--ns-navy-700), var(--ns-azul));
+  padding: 0;
+  border: 0;
+  background: linear-gradient(135deg, var(--ns-navy-700), var(--ns-azul));
+  cursor: pointer;
+
+  img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+.ver-fotos {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 12px;
+  background: rgb(20 33 61 / 0.7);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
 }
 .selo {
   position: absolute;

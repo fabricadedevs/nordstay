@@ -2,9 +2,23 @@
 <p class="apoio">Está tudo certo? Então é só continuar.</p>
 
 <article class="ns-card reserva">
-  <div class="foto" role="img" aria-label="Foto do quarto">
+  <button
+    type="button"
+    class="foto"
+    [attr.aria-label]="'Ver as ' + fotos.length + ' fotos do quarto e do resort'"
+    (click)="galeria.abrir(0)"
+  >
+    <img [src]="fotos[0].src" [alt]="fotos[0].legenda" />
     <span class="selo">Confirmada</span>
-  </div>
+    <span class="ver-fotos" aria-hidden="true">
+      <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <circle cx="9" cy="10" r="1.6" />
+        <path d="m21 16-5-5-8 8" />
+      </svg>
+      {{ fotos.length }} fotos
+    </span>
+  </button>
   <div class="corpo">
     <h3>Quarto {{ reserva().quartoId }}</h3>
     <p class="hospede">{{ reserva().hospede.nome }} · {{ reserva().hospede.documentoMascarado }}</p>
@@ -32,6 +46,7 @@
     </dl>
   </div>
 </article>
+<ns-galeria-fotos #galeria [fotos]="fotos" titulo="Fotos do quarto e do resort" />
 
 <button class="ns-botao" type="button" (click)="continuar.emit()">Continuar</button>
 <button class="ns-link" type="button" (click)="voltar.emit()">Não é a sua reserva? Voltar</button>

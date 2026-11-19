@@ -28,11 +28,23 @@
       </div>
 
       <div class="galeria">
-        @for (foto of quarto.fotos; track foto; let i = $index) {
-          <img [src]="foto" [alt]="i === 0 ? 'Foto do quarto' : ''" [class]="'foto-' + i" />
+        @for (foto of quarto.fotos; track foto.src; let i = $index) {
+          <button
+            type="button"
+            [class]="'foto foto-' + i"
+            [attr.aria-label]="'Ver foto: ' + foto.legenda"
+            (click)="galeria.abrir(i)"
+          >
+            <img [src]="foto.src" [alt]="i === 0 ? foto.legenda : ''" />
+          </button>
         }
-        <span class="mais-fotos">+{{ quarto.fotosExtras }} fotos</span>
+        @if (quarto.fotosExtras > 0) {
+          <button type="button" class="mais-fotos" (click)="galeria.abrir(quarto.fotos.length)">
+            +{{ quarto.fotosExtras }} fotos
+          </button>
+        }
       </div>
+      <ns-galeria-fotos #galeria [fotos]="quarto.galeria" titulo="Fotos do quarto e do resort" />
 
       <div class="oferece">
         <h2>O que este quarto oferece</h2>
