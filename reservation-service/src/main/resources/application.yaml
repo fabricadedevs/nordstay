@@ -27,3 +27,5 @@ reservation:
     poll-interval-ms: 1000
     lock-ttl-ms: 40000
     publish-timeout-ms: 25000
+  checkout:
+    topic: nordstay.checkout-solicitado
