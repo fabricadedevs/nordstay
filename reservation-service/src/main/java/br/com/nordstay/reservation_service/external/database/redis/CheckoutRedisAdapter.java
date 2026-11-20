@@ -1,9 +1,11 @@
 package br.com.nordstay.reservation_service.external.database.redis;
 
 import br.com.nordstay.reservation_service.application.port.in.CheckoutAceito;
+import br.com.nordstay.reservation_service.application.port.out.MarcarCheckoutConcluidoPort;
 import br.com.nordstay.reservation_service.application.port.out.RegistrarCheckoutPort;
 import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontradaException;
 import br.com.nordstay.reservation_service.domain.exception.StatusCheckoutInvalidoException;
+import br.com.nordstay.reservation_service.domain.exception.TransicaoCheckoutInvalidaException;
 import br.com.nordstay.reservation_service.domain.model.Reserva;
 import br.com.nordstay.reservation_service.domain.model.StatusReserva;
 import org.springframework.data.redis.core.StringRedisTemplate;
@@ -19,7 +21,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Repository
-public class CheckoutRedisAdapter implements RegistrarCheckoutPort {
+public class CheckoutRedisAdapter implements RegistrarCheckoutPort, MarcarCheckoutConcluidoPort {
 
     private static final long IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60;
     private static final String OUTBOX_KEY = "outbox:reservation";
@@ -61,6 +63,24 @@ public class CheckoutRedisAdapter implements RegistrarCheckoutPort {
                     redis.call('RPUSH', KEYS[4], quartoId)
 
                     return 'CREATED\\n' .. ARGV[1]
+                    """, String.class);
+
+    private static final DefaultRedisScript<String> CONCLUIR_CHECKOUT_SCRIPT =
+            new DefaultRedisScript<>("""
+                    if redis.call('EXISTS', KEYS[1]) == 0 then
+                        return 'NOT_FOUND'
+                    end
+
+                    local statusAtual = redis.call('HGET', KEYS[1], 'status')
+                    if statusAtual == 'CHECKED_OUT' then
+                        return 'ALREADY_COMPLETED'
+                    end
+                    if statusAtual ~= 'CHECKOUT_SOLICITADO' then
+                        return 'INVALID_STATUS\\n' .. (statusAtual or '')
+                    end
+
+                    redis.call('HSET', KEYS[1], 'status', 'CHECKED_OUT')
+                    return 'COMPLETED'
                     """, String.class);
 
     private final StringRedisTemplate redisTemplate;
@@ -121,6 +141,30 @@ public class CheckoutRedisAdapter implements RegistrarCheckoutPort {
         }
 
         throw new IllegalStateException("Resultado inesperado do Redis ao registrar checkout");
+    }
+
+    @Override
+    public void marcarComoConcluido(String reservaId) {
+        String resultado = redisTemplate.execute(
+                CONCLUIR_CHECKOUT_SCRIPT,
+                List.of(chaveReserva(reservaId))
+        );
+        if ("COMPLETED".equals(resultado) || "ALREADY_COMPLETED".equals(resultado)) {
+            return;
+        }
+        if ("NOT_FOUND".equals(resultado)) {
+            throw new ReservaNaoEncontradaException();
+        }
+        if (resultado != null && resultado.startsWith("INVALID_STATUS\n")) {
+            throw new TransicaoCheckoutInvalidaException(
+                    reservaId,
+                    resultado.substring("INVALID_STATUS\n".length())
+            );
+        }
+        if (resultado == null) {
+            throw new IllegalStateException("Redis não retornou o resultado da conclusão do checkout");
+        }
+        throw new IllegalStateException("Resultado inesperado do Redis ao concluir checkout");
     }
 
     private String serializarResposta(CheckoutAceito resposta) {

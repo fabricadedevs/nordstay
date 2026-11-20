@@ -15,6 +15,12 @@ spring:
       connect-timeout: 60000
   kafka:
     bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: reservation-service
+      enable-auto-commit: false
+      auto-offset-reset: earliest
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
     producer:
       acks: all
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
@@ -34,3 +40,5 @@ reservation:
     publish-timeout-ms: 25000
   checkout:
     topic: nordstay.checkout-solicitado
+  fatura-fechada:
+    topic: nordstay.fatura-fechada

@@ -270,6 +270,11 @@ Sem Schema Registry: a versão vai no campo `versao`.
 
 `status`: `PAGA` · `PENDENTE`
 
+O reservation-service consome esse evento pelo Spring Kafka. Ao receber um envelope v1 válido,
+usa `dados.reservaId` para transicionar atomicamente a reserva de `CHECKOUT_SOLICITADO` para
+`CHECKED_OUT`. A repetição após essa transição é confirmada sem novo efeito; reserva inexistente
+ou em outro status é enviada para a DLT.
+
 > Nos exemplos a partir de `chave-gerada`, os campos `id`, `ocorridoEm`, `origem` e `correlacaoId` do envelope foram omitidos para encurtar; eles são obrigatórios em todos os eventos.
 
 ---
@@ -294,7 +299,10 @@ A mensagem vai para a DLT **na mesma partição** de origem, com o payload origi
 | `kafka_dlt-original-offset` | Offset de origem |
 | `kafka_dlt-original-timestamp` | Timestamp original |
 
-> **Pendente (depende da NS-00):** definir se o tratamento de erro usa **Spring Kafka** (`DefaultErrorHandler` + `DeadLetterPublishingRecoverer`) ou o binder do **Spring Cloud Stream** (`enableDlq`, `maxAttempts`, `backOff*`). Os headers acima são os do Spring Kafka.
+O consumer de `nordstay.fatura-fechada` no reservation-service usa **Spring Kafka**
+(`DefaultErrorHandler` + `DeadLetterPublishingRecoverer`), com até três retentativas exponenciais
+para erros transitórios e DLT imediata para erros permanentes ou payload inválido. Os demais consumers
+devem documentar sua estratégia ao serem implementados. Os headers acima são os do Spring Kafka.
 
 **Reprocessar uma DLT:** corrigir a causa e republicar a mensagem no tópico de origem, mantendo o mesmo `id`, para que os consumidores idempotentes não dupliquem o efeito.
 

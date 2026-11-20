@@ -3,6 +3,8 @@ package br.com.nordstay.reservation_service.external.database.redis;
 import br.com.nordstay.reservation_service.TestcontainersConfiguration;
 import br.com.nordstay.reservation_service.application.port.in.CheckoutAceito;
 import br.com.nordstay.reservation_service.domain.exception.StatusCheckoutInvalidoException;
+import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontradaException;
+import br.com.nordstay.reservation_service.domain.exception.TransicaoCheckoutInvalidaException;
 import br.com.nordstay.reservation_service.domain.model.Documento;
 import br.com.nordstay.reservation_service.domain.model.Hospede;
 import br.com.nordstay.reservation_service.domain.model.Reserva;
@@ -138,6 +140,36 @@ class CheckoutRedisAdapterIntegrationTest {
         List<String> eventos = redisTemplate.opsForList().range(OUTBOX_KEY, 0, -1);
         assertTrue(eventos == null
                 || eventos.stream().noneMatch(evento -> evento.contains(RESERVA_ID)));
+    }
+
+    @Test
+    void concluiCheckoutETrataRepeticaoComoSucesso() {
+        criarReservaNoRedis("CHECKOUT_SOLICITADO");
+
+        adapter.marcarComoConcluido(RESERVA_ID);
+        adapter.marcarComoConcluido(RESERVA_ID);
+
+        assertEquals("CHECKED_OUT", redisTemplate.opsForHash().get(RESERVA_KEY, "status"));
+    }
+
+    @Test
+    void rejeitaConclusaoQuandoReservaEstaEmEstadoIncompativel() {
+        criarReservaNoRedis("CHECKED_IN");
+
+        assertThrows(
+                TransicaoCheckoutInvalidaException.class,
+                () -> adapter.marcarComoConcluido(RESERVA_ID)
+        );
+
+        assertEquals("CHECKED_IN", redisTemplate.opsForHash().get(RESERVA_KEY, "status"));
+    }
+
+    @Test
+    void rejeitaConclusaoQuandoReservaNaoExiste() {
+        assertThrows(
+                ReservaNaoEncontradaException.class,
+                () -> adapter.marcarComoConcluido(RESERVA_ID)
+        );
     }
 
     private void criarReservaNoRedis(String status) {
