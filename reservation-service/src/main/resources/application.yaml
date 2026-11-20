@@ -1,11 +1,14 @@
 spring:
+  profiles:
+    active:
+      - dev
   application:
     name: reservation-service
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          jwk-set-uri: ${DOOR_LOCK_JWK_SET_URI:http://localhost:8082/oauth2/jwks}
+#  security:
+#    oauth2:
+#      resourceserver:
+#        jwt:
+#          jwk-set-uri: ${DOOR_LOCK_JWK_SET_URI:http://localhost:8082/oauth2/jwks}
   data:
     redis:
       database: 0
