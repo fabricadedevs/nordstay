@@ -4,6 +4,7 @@ import br.com.nordstay.reservation_service.application.port.in.ConsultarReservaU
 import br.com.nordstay.reservation_service.application.port.in.CheckinAceito;
 import br.com.nordstay.reservation_service.application.port.in.RealizarCheckinCommand;
 import br.com.nordstay.reservation_service.application.port.in.RealizarCheckinUseCase;
+import br.com.nordstay.reservation_service.application.port.in.SolicitarCheckoutUseCase;
 import br.com.nordstay.reservation_service.application.port.out.ConsultaRateLimitPort;
 import br.com.nordstay.reservation_service.domain.exception.CheckinForaDaDataException;
 import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontradaException;
@@ -12,10 +13,12 @@ import br.com.nordstay.reservation_service.domain.model.Documento;
 import br.com.nordstay.reservation_service.domain.model.Hospede;
 import br.com.nordstay.reservation_service.domain.model.Reserva;
 import br.com.nordstay.reservation_service.domain.model.StatusReserva;
+import br.com.nordstay.reservation_service.security.SecurityConfiguracao;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -38,6 +41,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @WebMvcTest(ReservaController.class)
+@Import(SecurityConfiguracao.class)
 class ReservaControllerTest {
 
     private static final String RESERVA_ID = "RSV-20261120-0042";
@@ -59,6 +63,9 @@ class ReservaControllerTest {
 
     @MockitoBean
     private RealizarCheckinUseCase realizarCheckin;
+
+    @MockitoBean
+    private SolicitarCheckoutUseCase solicitarCheckout;
 
     @BeforeEach
     void permitirConsultasPorPadrao() {

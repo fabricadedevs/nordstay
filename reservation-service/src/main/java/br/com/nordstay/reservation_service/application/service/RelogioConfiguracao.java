@@ -1,6 +1,7 @@
 package br.com.nordstay.reservation_service.application.service;
 
 import br.com.nordstay.reservation_service.domain.service.PoliticaCheckin;
+import br.com.nordstay.reservation_service.domain.service.PoliticaCheckout;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -18,5 +19,10 @@ public class RelogioConfiguracao {
     @Bean
     PoliticaCheckin politicaCheckin() {
         return new PoliticaCheckin();
+    }
+
+    @Bean
+    PoliticaCheckout politicaCheckout() {
+        return new PoliticaCheckout();
     }
 }
