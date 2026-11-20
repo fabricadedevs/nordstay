@@ -1,6 +1,8 @@
 package br.com.nordstay.reservation_service.entrypoint.rest;
 
 import br.com.nordstay.reservation_service.application.port.in.ConsultarReservaUseCase;
+import br.com.nordstay.reservation_service.application.port.in.SolicitarCheckoutCommand;
+import br.com.nordstay.reservation_service.application.port.in.SolicitarCheckoutUseCase;
 import br.com.nordstay.reservation_service.application.port.in.RealizarCheckinCommand;
 import br.com.nordstay.reservation_service.application.port.in.RealizarCheckinUseCase;
 import br.com.nordstay.reservation_service.application.port.out.ConsultaRateLimitPort;
@@ -8,6 +10,8 @@ import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontrada
 import br.com.nordstay.reservation_service.domain.model.Reserva;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -31,14 +35,17 @@ public class ReservaController {
     private final ConsultarReservaUseCase consultarReserva;
     private final ConsultaRateLimitPort consultaRateLimit;
     private final RealizarCheckinUseCase realizarCheckin;
+    private final SolicitarCheckoutUseCase solicitarCheckout;
 
     public ReservaController(
             ConsultarReservaUseCase consultarReserva,
             ConsultaRateLimitPort consultaRateLimit,
-            RealizarCheckinUseCase realizarCheckin) {
+            RealizarCheckinUseCase realizarCheckin,
+            SolicitarCheckoutUseCase solicitarCheckout) {
         this.consultarReserva = consultarReserva;
         this.consultaRateLimit = consultaRateLimit;
         this.realizarCheckin = realizarCheckin;
+        this.solicitarCheckout = solicitarCheckout;
     }
 
     @GetMapping("/{reservaId}")
@@ -82,6 +89,23 @@ public class ReservaController {
         return ResponseEntity.accepted()
                 .location(URI.create(resultado.websocket()))
                 .body(CheckinAceitoResponse.de(resultado));
+    }
+
+    @PostMapping("/{reservaId}/checkout")
+    public ResponseEntity<CheckoutAceitoResponse> solicitarCheckout(
+            @PathVariable
+            @Pattern(regexp = "RSV-\\d{8}-\\d{4}")
+            String reservaId,
+            @RequestHeader("Idempotency-Key") UUID idempotencyKey,
+            @AuthenticationPrincipal Jwt chave) {
+        if (!reservaId.equals(chave.getSubject())) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+
+        var resultado = solicitarCheckout.solicitar(
+                new SolicitarCheckoutCommand(reservaId, idempotencyKey)
+        );
+        return ResponseEntity.accepted().body(CheckoutAceitoResponse.de(resultado));
     }
 
     @ExceptionHandler(ReservaNaoEncontradaException.class)

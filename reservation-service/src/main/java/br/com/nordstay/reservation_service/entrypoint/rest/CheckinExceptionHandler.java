@@ -3,6 +3,7 @@ package br.com.nordstay.reservation_service.entrypoint.rest;
 import br.com.nordstay.reservation_service.domain.exception.CheckinForaDaDataException;
 import br.com.nordstay.reservation_service.domain.exception.CheckinRequisicaoInvalidaException;
 import br.com.nordstay.reservation_service.domain.exception.ReservaNaoEncontradaException;
+import br.com.nordstay.reservation_service.domain.exception.StatusCheckoutInvalidoException;
 import br.com.nordstay.reservation_service.domain.exception.StatusCheckinInvalidoException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,13 @@ public class CheckinExceptionHandler {
             StatusCheckinInvalidoException exception,
             HttpServletRequest request) {
         return problem(HttpStatus.CONFLICT, "Check-in não permitido", exception.getMessage(), request);
+    }
+
+    @ExceptionHandler(StatusCheckoutInvalidoException.class)
+    public ResponseEntity<ProblemDetail> statusCheckoutInvalido(
+            StatusCheckoutInvalidoException exception,
+            HttpServletRequest request) {
+        return problem(HttpStatus.CONFLICT, "Checkout não permitido", exception.getMessage(), request);
     }
 
     @ExceptionHandler(CheckinForaDaDataException.class)
