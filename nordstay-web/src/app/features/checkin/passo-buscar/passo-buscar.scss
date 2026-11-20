@@ -1,0 +1,35 @@
+h2 {
+  margin: 24px 0 4px;
+  font-size: 20px;
+  line-height: 28px;
+}
+.apoio,
+.nota,
+.ajuda {
+  margin: 0;
+  color: var(--ns-cinza);
+  font-size: 14px;
+}
+.nota {
+  font-size: 12px;
+}
+.ajuda {
+  margin-top: 20px;
+  text-align: center;
+}
+form {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+}
+.icone {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--ns-vermelho);
+  color: #fff;
+  font-size: 12px;
+}

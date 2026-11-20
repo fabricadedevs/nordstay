@@ -1,0 +1,56 @@
+header {
+  height: 72px;
+  background: var(--ns-navy);
+}
+
+.conteudo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1188px;
+  height: 100%;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+.marca {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 6px;
+  color: #fff;
+  font: 600 20px/28px var(--ns-fonte);
+  text-decoration: none;
+}
+
+.logo {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--ns-laranja);
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 30px;
+}
+
+.ajuda {
+  color: #fff;
+  font: 600 14px/20px var(--ns-fonte);
+  text-decoration: none;
+}
+
+.minha-estadia {
+  display: grid;
+  place-items: center;
+  width: 120px;
+  height: 40px;
+  border: 1.5px solid var(--ns-linha);
+  border-radius: 10px;
+  background: #fff;
+  color: var(--ns-tinta);
+  font: 700 15px/20px var(--ns-fonte);
+  text-decoration: none;
+}

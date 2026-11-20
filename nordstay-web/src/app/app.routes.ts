@@ -6,7 +6,7 @@ export const routes: Routes = [
   {
     path: 'checkin',
     title: 'NordStay · Check-in',
-    loadComponent: () => import('./features/checkin/checkin.page').then((m) => m.CheckinPage),
+    loadComponent: () => import('./features/checkin/checkin').then((m) => m.Checkin),
   },
   {
     path: 'estadia/:reservaId',
